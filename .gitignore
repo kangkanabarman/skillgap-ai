@@ -89,9 +89,9 @@ android-sdk/ -e
 # Environment files
 *.env
 *.env.*
-# Ignore ML datasets
-backend/ml/raw_data/
-*.csv
+# Ignore ML datasets (except tracked CSV files)
+# backend/ml/raw_data/
+# *.csv - Now tracked by Git LFS
 
 # Ignore database folders
 data/
