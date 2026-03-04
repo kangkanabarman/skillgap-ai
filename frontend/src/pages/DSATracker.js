@@ -23,40 +23,26 @@ const PROGRESS_KEY = 'dsa-progress';
 // Mock data as fallback when API is unavailable
 const MOCK_DSA_DATA = [
   {
-    company: "Amazon",
-    topic: "Arrays",
-    problems: [
-      { title: "Two Sum", url: "https://leetcode.com/problems/two-sum", difficulty: "Easy" },
-      { title: "Best Time to Buy and Sell Stock", url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock", difficulty: "Easy" },
-      { title: "Maximum Subarray", url: "https://leetcode.com/problems/maximum-subarray", difficulty: "Medium" },
-      { title: "3Sum", url: "https://leetcode.com/problems/3sum", difficulty: "Medium" },
-    ]
+    title: "Two Sum",
+    url: "https://leetcode.com/problems/two-sum",
+    difficulty: "Easy",
+    topics: ["Arrays", "Hashing"],
+    companies: ["Amazon", "Google", "Microsoft"]
   },
   {
-    company: "Google",
-    topic: "Arrays",
-    problems: [
-      { title: "Two Sum", url: "https://leetcode.com/problems/two-sum", difficulty: "Easy" },
-      { title: "3Sum", url: "https://leetcode.com/problems/3sum", difficulty: "Medium" },
-      { title: "Container With Most Water", url: "https://leetcode.com/problems/container-with-most-water", difficulty: "Medium" },
-    ]
+    title: "Best Time to Buy and Sell Stock",
+    url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock",
+    difficulty: "Easy",
+    topics: ["Arrays"],
+    companies: ["Amazon"]
   },
   {
-    company: "Meta",
-    topic: "Strings",
-    problems: [
-      { title: "Longest Substring Without Repeating Characters", url: "https://leetcode.com/problems/longest-substring-without-repeating-characters", difficulty: "Medium" },
-      { title: "Valid Parentheses", url: "https://leetcode.com/problems/valid-parentheses", difficulty: "Easy" },
-    ]
-  },
-  {
-    company: "Microsoft",
-    topic: "Trees",
-    problems: [
-      { title: "Validate Binary Search Tree", url: "https://leetcode.com/problems/validate-binary-search-tree", difficulty: "Medium" },
-      { title: "Binary Tree Level Order Traversal", url: "https://leetcode.com/problems/binary-tree-level-order-traversal", difficulty: "Medium" },
-    ]
-  },
+    title: "Maximum Subarray",
+    url: "https://leetcode.com/problems/maximum-subarray",
+    difficulty: "Medium",
+    topics: ["Arrays", "Dynamic Programming"],
+    companies: ["Google"]
+  }
 ];
 
 function getStoredProgress() {
@@ -81,38 +67,63 @@ export default function DSATracker() {
   const [progress, setProgress] = useState(getStoredProgress);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API}/dsa/all`);
-        setData(res.data || []);
-        const comps = [...new Set((res.data || []).map((d) => d.company))].sort();
-        setCompanies(comps);
-        if (comps.length && !selectedCompany) setSelectedCompany(comps[0]);
-      } catch (err) {
-        console.error('API Error:', err);
-        // Use mock data as fallback when API is unavailable
-        setData(MOCK_DSA_DATA);
-        const comps = [...new Set(MOCK_DSA_DATA.map((d) => d.company))].sort();
-        setCompanies(comps);
-        if (comps.length && !selectedCompany) setSelectedCompany(comps[0]);
-        toast.info('Using demo data. Connect to backend for full DSA problem set.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/dsa/all`);
+      const problems = res.data || [];
 
-  const topics = selectedCompany
-    ? [...new Set(data.filter((d) => d.company === selectedCompany).map((d) => d.topic))].sort()
-    : [];
-  const filteredData = data.filter(
-    (d) =>
-      d.company === selectedCompany &&
-      (selectedTopic === 'all' || d.topic === selectedTopic)
-  );
+      setData(problems);
+
+      // Extract companies from new structure
+      const comps = [
+        ...new Set(
+          problems.flatMap((p) => p.companies || [])
+        ),
+      ].sort();
+
+      setCompanies(comps);
+
+      if (comps.length && !selectedCompany) {
+        setSelectedCompany(comps[0]);
+      }
+
+    } catch (err) {
+      console.error('API Error:', err);
+      setData(MOCK_DSA_DATA);
+      toast.info('Using demo data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+
+const topics = selectedCompany
+  ? [
+      ...new Set(
+        data
+          .filter((p) => p.companies?.includes(selectedCompany))
+          .flatMap((p) => p.topics || [])
+      ),
+    ].sort()
+  : [];
+
+  useEffect(() => {
+  if (selectedCompany && !topics.includes(selectedTopic)) {
+    setSelectedTopic('all');
+  }
+}, [selectedCompany]);
+
+const filteredData = data.filter((p) => {
+  if (!p.companies?.includes(selectedCompany)) return false;
+
+  if (selectedTopic === 'all' || !selectedTopic) return true;
+
+  return p.topics?.includes(selectedTopic);
+});
 
   const toggleProblem = (url) => {
     const next = { ...progress, [url]: !progress[url] };
@@ -193,64 +204,62 @@ export default function DSATracker() {
                 </div>
               </div>
 
-              <div className="space-y-6">
-                {filteredData.map((block, idx) => (
-                  <motion.div
-                    key={`${block.company}-${block.topic}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="glass-card rounded-xl p-6"
-                  >
-                    <h3 className="text-lg font-semibold mb-4 text-primary">
-                      {block.topic}
-                    </h3>
-                    <div className="space-y-3">
-                      {block.problems?.map((p) => (
-                        <div
-                          key={p.url}
-                          className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0"
-                        >
-                          <Checkbox
-                            checked={!!progress[p.url]}
-                            onCheckedChange={() => toggleProblem(p.url)}
-                            className="rounded"
-                          />
-                          <span
-                            className={`flex-1 ${
-                              progress[p.url] ? 'line-through text-muted-foreground' : ''
-                            }`}
-                          >
-                            {p.title}
-                          </span>
-                          {p.difficulty && (
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded ${
-                                p.difficulty === 'Easy'
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : p.difficulty === 'Medium'
-                                    ? 'bg-yellow-500/20 text-yellow-400'
-                                    : 'bg-red-500/20 text-red-400'
-                              }`}
-                            >
-                              {p.difficulty}
-                            </span>
-                          )}
-                          <a
-                            href={p.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline flex items-center gap-1"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Open
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              <div className="space-y-4">
+  {filteredData.map((p, idx) => (
+    <motion.div
+      key={p.url}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: idx * 0.03 }}
+      className="glass-card rounded-xl p-4"
+    >
+      <div className="flex items-center gap-3">
+
+        <Checkbox
+          checked={!!progress[p.url]}
+          onCheckedChange={() => toggleProblem(p.url)}
+        />
+
+        <span
+          className={`flex-1 ${
+            progress[p.url] ? 'line-through text-muted-foreground' : ''
+          }`}
+        >
+          {p.title}
+        </span>
+
+        <span className="text-xs text-muted-foreground">
+          {p.topics?.join(", ")}
+        </span>
+
+        {p.difficulty && (
+          <span
+            className={`text-xs px-2 py-0.5 rounded ${
+              p.difficulty === 'Easy'
+                ? 'bg-green-500/20 text-green-400'
+                : p.difficulty === 'Medium'
+                ? 'bg-yellow-500/20 text-yellow-400'
+                : 'bg-red-500/20 text-red-400'
+            }`}
+          >
+            {p.difficulty}
+          </span>
+        )}
+
+        <a
+          href={p.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline flex items-center gap-1"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Open
+        </a>
+
+      </div>
+    </motion.div>
+  ))}
+</div>
 
               {filteredData.length === 0 && !loading && (
                 <div className="glass-card rounded-xl p-12 text-center">

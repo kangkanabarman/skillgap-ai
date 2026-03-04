@@ -21,6 +21,16 @@ JOB_DATABASE = {
             "linux", "problem solving", "sql", "docker", "kubernetes", "microservices", "agile"
         ],
     },
+    "google_data_analyst": {
+    "company": "Google",
+    "role": "Data Analyst",
+    "description": "Google is hiring Data Analysts to analyze business data.",
+    "skills": [
+        "sql", "python", "excel", "data visualization",
+        "tableau", "power bi", "statistics",
+        "data cleaning", "communication"
+        ],
+    },
     "google_data_scientist": {
         "company": "Google",
         "role": "Data Scientist",
@@ -129,6 +139,16 @@ JOB_DATABASE = {
         "skills": [
             "java", "python", "sql", "javascript", "git", "agile",
             "problem solving", "communication", "teamwork"
+        ],
+    },
+
+    "zoho_software_engineer": {
+    "company": "Zoho",
+    "role": "Software Engineer",
+    "description": "Zoho is hiring backend and full-stack engineers.",
+    "skills": [
+        "java", "python", "mysql", "rest api", "microservices",
+        "algorithms", "data structures", "problem solving", "git"
         ],
     },
     "tcs_software_engineer": {

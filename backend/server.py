@@ -22,6 +22,9 @@ import bcrypt
 import jwt
 import spacy
 
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from skills_taxonomy import normalize_skill
 from modules.resume_parser import (
     extract_text,
@@ -45,6 +48,17 @@ from modules.skill_matcher import get_missing_skills, calculate_match_percentage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
+# =========================
+# Load Trained Transformer Model
+# =========================
+
+try:
+    TRANSFORMER_PATH = ROOT_DIR / "ml" / "skillgap_transformer_v1"
+    transformer_model = SentenceTransformer(str(TRANSFORMER_PATH))
+    print("✅ Transformer model loaded")
+except Exception as e:
+    print("❌ Transformer model failed to load:", e)
+    transformer_model = None
 
 # MongoDB (optional - use MONGO_URL env)
 mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
@@ -204,10 +218,62 @@ def analyze_career_path_rule_based(answers: List[Dict[str, Any]]) -> Dict[str, s
     return {"career_path": path, "explanation": explanation}
 
 
+def compute_ai_similarity(resume_text: str, job_text: str) -> float:
+    """
+    Compute semantic similarity using trained transformer model.
+    Returns score between 0 and 1.
+    """
+    if transformer_model is None:
+        return 0.0
+
+    emb1 = transformer_model.encode(resume_text)
+    emb2 = transformer_model.encode(job_text)
+
+    score = cosine_similarity([emb1], [emb2])[0][0]
+    return float(score)
+
+def validate_company_and_role(company: str, role: str):
+    """
+    Strict validation:
+    - Company must exist
+    - Role must exist
+    - Role must belong to company (if mapped)
+    """
+
+    if not company or len(company.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Invalid company name.")
+
+    if not role or len(role.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Invalid role name.")
+
+    company = company.strip()
+    role = role.strip()
+
+    valid_companies = list_companies()
+    valid_companies_lower = [c.lower() for c in valid_companies]
+
+    if company.lower() not in valid_companies_lower:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Company '{company}' is not supported."
+        )
+
+    valid_roles = list_roles(company)
+    valid_roles_lower = [r.lower() for r in valid_roles]
+
+    if role.lower() not in valid_roles_lower:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Role '{role}' is not valid for company '{company}'."
+        )
+
+    return True
+
 # Routes
 @api_router.get("/")
 async def root():
     return {"message": "SkillGap AI API", "status": "running", "version": "2.0"}
+    
 
 
 @api_router.post("/auth/register", response_model=TokenResponse)
@@ -290,10 +356,12 @@ async def upload_resume(file: UploadFile = File(...), current_user: dict = Depen
 async def analyze_skill_gap(
     job_request: JobSelectionRequest,
     current_user: dict = Depends(get_current_user),
-):
-    # STEP 1 — Validate company
-    company_check = validate_company(job_request.company)
-    company_known = company_check["exists"]
+): 
+    # Strict validation
+    validate_company_and_role(
+    job_request.company,
+    job_request.role
+)
 
 
 
@@ -310,28 +378,54 @@ async def analyze_skill_gap(
             detail="No resume found. Upload a resume first.",
         )
 
-    # STEP 3 — Fetch job description only if company is known
+    # ==============================
+    # FALLBACK CASCADE (UPDATED)
+    # ==============================
+
+    job_skills_raw = []
+    fallback_used = "NONE"
     job_description_text = None
 
-    if company_known:
+
+    # ----------------------------------
+    # STEP 1 — PREDEFINED STATIC ROLES
+    # ----------------------------------
+    try:
+        from modules.job_data import get_default_skills_for_role
+
+        predefined_skills = get_default_skills_for_role(job_request.role)
+
+        if predefined_skills:
+            job_skills_raw = predefined_skills
+            fallback_used = "PREDEFINED_STATIC"
+
+    except Exception:
+        pass
+
+
+    # ----------------------------------
+    # STEP 2 — EXTERNAL JOB API
+    # ----------------------------------
+    if not job_skills_raw:
+
         job_description_text = find_matching_job(
             job_request.company.lower(),
             job_request.role.lower()
         )
 
-
-    # CASE 1 — Job API works
-    if job_description_text:
-        job_skills_raw = extract_skills_from_text(
-            job_description_text,
-            nlp,
-            matcher
-        )
-        fallback_used = "JOB_API"
+        if job_description_text:
+            job_skills_raw = extract_skills_from_text(
+                job_description_text,
+                nlp,
+                matcher
+            )
+            fallback_used = "JOB_API"
 
 
-    # CASE 2 — Try embedding ML model
-    else:
+    # ----------------------------------
+    # STEP 3 — YOUR ML MODEL
+    # ----------------------------------
+    if not job_skills_raw:
         try:
             from modules.role_similarity import predict_role_from_text
             from modules.job_data import get_default_skills_for_role
@@ -341,12 +435,20 @@ async def analyze_skill_gap(
             )
 
             predicted_role = prediction["predicted_role"]
+
             job_skills_raw = get_default_skills_for_role(predicted_role)
 
             fallback_used = "EMBEDDING_MODEL"
 
         except Exception:
-            # CASE 3 — FINAL FALLBACK → LLM
+            pass
+
+
+    # ----------------------------------
+    # STEP 4 — OLLAMA LLM (FINAL)
+    # ----------------------------------
+    if not job_skills_raw:
+        try:
             from modules.llm_fallback import generate_skills_llm
 
             job_skills_raw = generate_skills_llm(
@@ -354,9 +456,13 @@ async def analyze_skill_gap(
                 job_request.role
             )
 
-            fallback_used = "LLM_MODEL"
+            fallback_used = "OLLAMA_LLM"
 
-
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Unable to determine skills for this role."
+            )
     # Normalize skills
     resume_skills = [normalize_skill(s) for s in resume.get("skills", [])]
     job_skills = [normalize_skill(s) for s in job_skills_raw]
@@ -364,32 +470,60 @@ async def analyze_skill_gap(
     if not job_skills:
         raise HTTPException(
             status_code=400,
-            detail="Could not extract skills from job description."
+            detail="Could not extract skills for this role."
         )
 
     if not resume_skills:
         raise HTTPException(
             status_code=400,
-            detail="No skills extracted from resume.",
+            detail="No skills extracted from resume."
         )
 
     # STEP 5 — Confidence Score
-    confidence_score = min(1.0, len(job_skills) / 15)
+    # =========================
+    # AI Semantic Similarity
+    # =========================
 
-    if confidence_score > 0.7:
+    if job_description_text:
+        similarity_score = compute_ai_similarity(
+            resume["text"],
+            job_description_text
+    )
+    else:
+        similarity_score = compute_ai_similarity(
+            resume["text"],
+            " ".join(job_skills)
+        )
+
+    confidence_score = similarity_score
+
+    if confidence_score > 0.75:
         confidence_level = "High"
-    elif confidence_score > 0.4:
+    elif confidence_score > 0.5:
         confidence_level = "Medium"
     else:
         confidence_level = "Low"
 
+
     # STEP 6 — Skill Matching
     missing_skills = get_missing_skills(resume_skills, job_skills)
 
-    match_percentage = calculate_match_percentage(
+    rule_based_score = calculate_match_percentage(
         resume_skills,
         job_skills,
     )
+    print("Rule score:", rule_based_score)
+    print("Similarity:", confidence_score)
+    print("Fallback used:", fallback_used)
+
+    # Combine rule-based + AI similarity
+    match_percentage = round(
+        (rule_based_score * 0.6) + (confidence_score * 100 * 0.4),2
+    )
+
+    # 🚀 If no missing skills, almost perfect match
+    if len(missing_skills) == 0:
+        match_percentage = 99.9
 
     roadmap = build_rule_based_roadmap(
         missing_skills,
