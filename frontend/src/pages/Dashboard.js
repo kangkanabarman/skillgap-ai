@@ -42,9 +42,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen aurora-gradient">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <nav className="p-6 md:p-12 flex justify-between items-center border-b border-border/50">
+      <nav className="bg-background/80 backdrop-blur-md p-6 md:p-12 flex justify-between items-center border-b border-border">
         <div className="text-2xl font-bold tracking-tight">
           SkillGap <span className="text-primary">AI</span>
         </div>
@@ -89,9 +89,9 @@ export default function Dashboard() {
               data-testid="upload-resume-card"
             >
               <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
-                <Upload className="h-6 w-6 text-primary" />
+                <Upload className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Upload Resume</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Upload Resume</h3>
               <p className="text-sm text-muted-foreground">
                 Analyze your resume and discover skill gaps
               </p>
@@ -103,10 +103,10 @@ export default function Dashboard() {
               onClick={() => navigate('/career-test')}
               data-testid="career-test-card"
             >
-              <div className="h-12 w-12 rounded-md bg-accent/10 flex items-center justify-center mb-4">
-                <Brain className="h-6 w-6 text-accent" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <Brain className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Career Test</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Career Test</h3>
               <p className="text-sm text-muted-foreground">
                 Find your perfect tech career path
               </p>
@@ -118,10 +118,10 @@ export default function Dashboard() {
               onClick={() => navigate('/skill-analysis')}
               data-testid="view-analyses-card"
             >
-              <div className="h-12 w-12 rounded-md bg-destructive/10 flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-destructive" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <FileText className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">View Analyses</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">View Analyses</h3>
               <p className="text-sm text-muted-foreground">
                 Review your skill gap reports
               </p>
@@ -133,10 +133,10 @@ export default function Dashboard() {
               onClick={() => navigate('/news')}
               data-testid="job-news-card"
             >
-              <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
-                <Newspaper className="h-6 w-6 text-primary" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <Newspaper className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Hiring News</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Hiring News</h3>
               <p className="text-sm text-muted-foreground">
                 Real-time job and hiring news
               </p>
@@ -148,10 +148,10 @@ export default function Dashboard() {
               onClick={() => navigate('/dsa-tracker')}
               data-testid="dsa-tracker-card"
             >
-              <div className="h-12 w-12 rounded-md bg-accent/10 flex items-center justify-center mb-4">
-                <Code2 className="h-6 w-6 text-accent" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <Code2 className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">DSA Tracker</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">DSA Tracker</h3>
               <p className="text-sm text-muted-foreground">
                 Company-wise LeetCode problems
               </p>
@@ -193,7 +193,7 @@ export default function Dashboard() {
                         {analysis.missing_skills.slice(0, 5).map((skill) => (
                           <span
                             key={skill}
-                            className="px-3 py-1 bg-destructive/10 text-destructive rounded-md text-sm"
+                            className="px-3 py-1 bg-destructive/10 text-destructive rounded-md text-sm font-semibold"
                           >
                             {skill}
                           </span>
@@ -225,7 +225,7 @@ export default function Dashboard() {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-semibold text-accent">
+                          <h3 className="text-lg font-semibold text-foreground">
                             {result.career_path}
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">

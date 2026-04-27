@@ -8,7 +8,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen aurora-gradient">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <div className="relative min-h-screen flex flex-col">
         {/* Navigation */}
@@ -58,7 +58,7 @@ export default function LandingPage() {
                 data-testid="hero-get-started-btn"
                 size="lg"
                 onClick={() => navigate('/auth')}
-                className="rounded-md btn-hover glow-primary px-8 py-6 text-lg"
+                className="rounded-md btn-hover px-8 py-6 text-lg"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Get Started Free
@@ -90,10 +90,10 @@ export default function LandingPage() {
               transition={{ delay: 0.1 }}
               className="glass-card rounded-xl p-6 hover:border-primary/50 transition-colors duration-300"
             >
-              <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
-                <Target className="h-6 w-6 text-primary" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <Target className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Skill Gap Analysis</h3>
+              <h3 className="text-xl font-semibold mb-3 text-foreground">Skill Gap Analysis</h3>
               <p className="text-muted-foreground">
                 Upload your resume and compare it against your dream job. Get precise
                 match percentages and identify exactly what skills you need.
@@ -107,10 +107,10 @@ export default function LandingPage() {
               transition={{ delay: 0.2 }}
               className="glass-card rounded-xl p-6 hover:border-primary/50 transition-colors duration-300"
             >
-              <div className="h-12 w-12 rounded-md bg-accent/10 flex items-center justify-center mb-4">
-                <TrendingUp className="h-6 w-6 text-accent" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <TrendingUp className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Learning Roadmap</h3>
+              <h3 className="text-xl font-semibold mb-3 text-foreground">Learning Roadmap</h3>
               <p className="text-muted-foreground">
                 Get AI-generated learning paths tailored to your goals. Includes course
                 recommendations, timelines, and resources.
@@ -124,10 +124,10 @@ export default function LandingPage() {
               transition={{ delay: 0.3 }}
               className="glass-card rounded-xl p-6 hover:border-primary/50 transition-colors duration-300"
             >
-              <div className="h-12 w-12 rounded-md bg-destructive/10 flex items-center justify-center mb-4">
-                <Brain className="h-6 w-6 text-destructive" />
+              <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center mb-4">
+                <Brain className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Career Test</h3>
+              <h3 className="text-xl font-semibold mb-3 text-foreground">Career Test</h3>
               <p className="text-muted-foreground">
                 Take our psychological assessment to discover which tech career path
                 truly fits your personality and thinking style.
@@ -155,7 +155,7 @@ export default function LandingPage() {
             data-testid="cta-start-btn"
             size="lg"
             onClick={() => navigate('/auth')}
-            className="rounded-md btn-hover glow-primary px-8 py-6 text-lg"
+            className="rounded-md btn-hover px-8 py-6 text-lg"
           >
             Start Your Journey
           </Button>

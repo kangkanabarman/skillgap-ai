@@ -35,8 +35,8 @@ export default function JobNews() {
   }, []);
 
   return (
-    <div className="min-h-screen aurora-gradient">
-      <nav className="p-6 md:p-12 flex justify-between items-center border-b border-border/50">
+    <div className="min-h-screen bg-background text-foreground">
+      <nav className="bg-background/80 backdrop-blur-md p-6 md:p-12 flex justify-between items-center border-b border-border">
         <div
           className="text-2xl font-bold tracking-tight cursor-pointer"
           onClick={() => navigate('/dashboard')}

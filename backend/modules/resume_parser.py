@@ -44,27 +44,62 @@ BEGINNER_VERBS = {
 }
 
 
+def extract_text_with_ocr(file_bytes: bytes) -> str:
+    import fitz
+    import numpy as np
+    import cv2
+    from paddleocr import PaddleOCR
+
+    ocr = PaddleOCR(use_angle_cls=True, lang="en")
+
+    text = ""
+    doc = fitz.open(stream=file_bytes, filetype="pdf")
+
+    for page in doc:
+        pix = page.get_pixmap(dpi=300)
+
+        img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+            pix.height, pix.width, pix.n
+        )
+
+        if pix.n == 4:
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+        results = ocr.ocr(img)
+
+        if results:
+            for line in results:
+                for word in line:
+                    text += word[1][0] + " "
+
+        text += "\n"
+
+    doc.close()
+    return text
+
+
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """Extract text from PDF using PyMuPDF (fitz) - fallback to pdfminer if needed."""
+    """Extract text from PDF using PyMuPDF → OCR fallback."""
+
+    text = ""
+
     if HAS_PYMUPDF:
         try:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
-            text = ""
             for page in doc:
                 text += page.get_text()
             doc.close()
-            return text
-        except Exception:
+        except:
             pass
 
-    # Fallback: PyPDF2
-    try:
-        import PyPDF2
-        pdf_file = io.BytesIO(file_bytes)
-        reader = PyPDF2.PdfReader(pdf_file)
-        return "".join(page.extract_text() or "" for page in reader.pages)
-    except Exception:
-        return ""
+    # If text layer empty → run OCR
+    if len(text.strip()) < 50:
+        text = extract_text_with_ocr(file_bytes)
+
+    return text
 
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
@@ -178,3 +213,4 @@ def estimate_skill_levels(text: str, skills: List[str]) -> Dict[str, str]:
         levels[skill] = level
 
     return levels
+

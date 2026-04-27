@@ -72,8 +72,8 @@ export default function SkillAnalysis() {
   };
 
   return (
-    <div className="min-h-screen aurora-gradient">
-      <nav className="p-6 md:p-12 flex justify-between items-center border-b border-border/50">
+    <div className="min-h-screen bg-background text-foreground">
+      <nav className="bg-background/80 backdrop-blur-md p-6 md:p-12 flex justify-between items-center border-b border-border">
         <div
           className="text-2xl font-bold tracking-tight cursor-pointer"
           onClick={() => navigate('/dashboard')}
@@ -129,12 +129,12 @@ export default function SkillAnalysis() {
                 </div>
               </div>
 
-              <Button
-                data-testid="analyze-btn"
-                type="submit"
-                disabled={analyzing}
-                className="w-full rounded-md btn-hover glow-primary"
-              >
+                <Button
+                  data-testid="analyze-btn"
+                  type="submit"
+                  disabled={analyzing}
+                  className="w-full rounded-md btn-hover"
+                >
                 {analyzing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -190,7 +190,7 @@ export default function SkillAnalysis() {
               {/* Skills Comparison */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="glass-card rounded-xl p-6">
-                  <h3 className="text-lg font-semibold mb-4 text-primary">Your Skills</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">Your Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {analysis.resume_skills.map((skill, idx) => (
                       <span
@@ -205,7 +205,7 @@ export default function SkillAnalysis() {
                 </div>
 
                 <div className="glass-card rounded-xl p-6">
-                  <h3 className="text-lg font-semibold mb-4 text-destructive">Missing Skills</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">Missing Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {analysis.missing_skills.length > 0 ? (
                       analysis.missing_skills.map((skill, idx) => (
@@ -234,7 +234,7 @@ export default function SkillAnalysis() {
                   <div className="space-y-6">
                     {Object.entries(analysis.learning_resources).map(([skill, resources]) => (
                       <div key={skill}>
-                        <h4 className="font-semibold text-primary mb-3">{skill}</h4>
+                        <h4 className="font-semibold text-foreground mb-3">{skill}</h4>
                         <div className="flex flex-wrap gap-3">
                           {resources.slice(0, 3).map((r, i) => (
                             <a

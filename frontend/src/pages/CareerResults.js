@@ -33,7 +33,7 @@ export default function CareerResults() {
 
   if (loading) {
     return (
-      <div className="min-h-screen aurora-gradient flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -43,7 +43,7 @@ export default function CareerResults() {
 
   if (!latestResult) {
     return (
-      <div className="min-h-screen aurora-gradient flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center" data-testid="no-results">
           <h2 className="text-2xl font-bold mb-4">No Test Results Yet</h2>
           <Button
@@ -59,7 +59,7 @@ export default function CareerResults() {
   }
 
   return (
-    <div className="min-h-screen aurora-gradient">
+    <div className="min-h-screen bg-background text-foreground">
       <nav className="p-6 md:p-12 flex justify-between items-center border-b border-border/50">
         <div
           className="text-2xl font-bold tracking-tight cursor-pointer"

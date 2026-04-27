@@ -87,7 +87,7 @@ export default function CareerTest() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen aurora-gradient flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -97,8 +97,8 @@ export default function CareerTest() {
   const question = questions[currentQuestion];
 
   return (
-    <div className="min-h-screen aurora-gradient">
-      <nav className="p-6 md:p-12 flex justify-between items-center border-b border-border/50">
+    <div className="min-h-screen bg-background text-foreground">
+      <nav className="bg-background/80 backdrop-blur-md p-6 md:p-12 flex justify-between items-center border-b border-border">
         <div
           className="text-2xl font-bold tracking-tight cursor-pointer"
           onClick={() => navigate('/dashboard')}
@@ -182,7 +182,7 @@ export default function CareerTest() {
                 data-testid="submit-btn"
                 onClick={handleSubmit}
                 disabled={submitting || !answers[currentQuestion]}
-                className="flex-1 rounded-md btn-hover glow-primary"
+                className="flex-1 rounded-md btn-hover"
               >
                 {submitting ? (
                   <>
@@ -198,7 +198,7 @@ export default function CareerTest() {
                 data-testid="next-btn"
                 onClick={handleNext}
                 disabled={!answers[currentQuestion]}
-                className="flex-1 rounded-md btn-hover glow-primary"
+                className="flex-1 rounded-md btn-hover"
               >
                 Next
               </Button>

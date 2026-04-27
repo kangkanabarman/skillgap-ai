@@ -17,45 +17,44 @@ code {
 
 @layer base {
     :root {
-        --background: 224 71% 4%;
-        --foreground: 210 40% 98%;
-        --card: 222 47% 11%;
-        --card-foreground: 210 40% 98%;
-        --popover: 222 47% 11%;
-        --popover-foreground: 210 40% 98%;
-        --primary: 243 75% 59%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 222 47% 11%;
-        --secondary-foreground: 210 40% 98%;
-        --muted: 217 33% 17%;
-        --muted-foreground: 215 20% 65%;
-        --accent: 188 94% 43%;
-        --accent-foreground: 210 40% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 217 33% 17%;
-        --input: 217 33% 17%;
-        --ring: 243 75% 59%;
-        --radius: 0.5rem;
-    }
+  /* Backgrounds */
+  --background: 150 20% 6%;        /* #0B0F0C */
+  --secondary-bg: 150 18% 9%;      /* #111714 */
+  --card: 150 15% 12%;             /* #151C18 */
+
+  /* Text */
+  --foreground: 220 15% 90%;       /* #E5E7EB */
+  --muted-foreground: 220 10% 65%; /* #9CA3AF */
+  --disabled: 220 10% 45%;         /* #6B7280 */
+
+  /* Greens */
+  --primary: 142 71% 45%;          /* #22C55E */
+  --primary-bright: 142 76% 60%;   /* #4ADE80 */
+  --primary-dark: 142 61% 25%;     /* #166534 */
+
+  /* UI */
+  --border: 142 40% 20%;
+  --input: 150 18% 9%;
+  --ring: 142 76% 60%;
+
+  --radius: 0.75rem;
+}
     .light {
-        --background: 0 0% 100%;
-        --foreground: 222 47% 11%;
-        --card: 0 0% 98%;
-        --card-foreground: 222 47% 11%;
-        --popover: 0 0% 98%;
-        --popover-foreground: 222 47% 11%;
-        --primary: 243 75% 50%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 40% 96%;
-        --secondary-foreground: 222 47% 11%;
-        --muted: 210 40% 96%;
-        --muted-foreground: 215 16% 47%;
-        --accent: 188 94% 43%;
-        --accent-foreground: 210 40% 98%;
-        --border: 214 32% 91%;
-        --input: 214 32% 91%;
-    }
+  --background: 0 0% 100%;
+  --secondary-bg: 210 40% 96%;
+  --card: 0 0% 98%;
+
+  --foreground: 222 47% 11%;
+  --muted-foreground: 215 16% 47%;
+  --disabled: 215 16% 65%;
+
+  --primary: 142 71% 45%;
+  --primary-bright: 142 76% 50%;
+  --primary-dark: 142 61% 30%;
+
+  --border: 142 30% 80%;
+  --input: 210 40% 96%;
+}
 }
 
 @layer base {

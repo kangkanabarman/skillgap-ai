@@ -11,6 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
 import { toast } from 'sonner';
 import { Code2, ExternalLink, Loader2 } from 'lucide-react';
 
@@ -64,7 +71,11 @@ export default function DSATracker() {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
   const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(getStoredProgress);
+const [progress, setProgress] = useState(getStoredProgress);
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [companyOpen, setCompanyOpen] = useState(false);
+
+
   const navigate = useNavigate();
 
 useEffect(() => {
@@ -120,9 +131,13 @@ const topics = selectedCompany
 const filteredData = data.filter((p) => {
   if (!p.companies?.includes(selectedCompany)) return false;
 
-  if (selectedTopic === 'all' || !selectedTopic) return true;
+  if (selectedTopic !== 'all' && selectedTopic && !p.topics?.includes(selectedTopic))
+    return false;
 
-  return p.topics?.includes(selectedTopic);
+  if (selectedDifficulty !== 'all' && p.difficulty !== selectedDifficulty)
+    return false;
+
+  return true;
 });
 
   const toggleProblem = (url) => {
@@ -134,8 +149,8 @@ const filteredData = data.filter((p) => {
   const completedCount = Object.values(progress).filter(Boolean).length;
 
   return (
-    <div className="min-h-screen aurora-gradient">
-      <nav className="p-6 md:p-12 flex justify-between items-center border-b border-border/50">
+    <div className="min-h-screen bg-background text-foreground">
+      <nav className="bg-background/80 backdrop-blur-md p-6 md:p-12 flex justify-between items-center border-b border-border">
         <div
           className="text-2xl font-bold tracking-tight cursor-pointer"
           onClick={() => navigate('/dashboard')}
@@ -166,19 +181,41 @@ const filteredData = data.filter((p) => {
             <>
               <div className="glass-card rounded-xl p-6 mb-8">
                 <div className="flex flex-wrap gap-4 items-center">
+
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium">Company</label>
-                    <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-                      <SelectTrigger className="w-[180px] bg-input/50">
-                        <SelectValue placeholder="Select company" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companies.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+<Select
+    open={companyOpen}
+    onOpenChange={setCompanyOpen}
+    value={selectedCompany}
+    onValueChange={setSelectedCompany}
+  >
+    <SelectTrigger className="w-[180px] bg-input/50">
+      <SelectValue>
+  {selectedCompany || "Select company"}
+</SelectValue>
+    </SelectTrigger>
+<SelectContent>
+      <Command>
+        <CommandInput placeholder="Search company..." />
+        <CommandEmpty>No company found.</CommandEmpty>
+        <CommandGroup className="max-h-60 overflow-y-auto">
+          {companies.map((c) => (
+            <CommandItem
+              key={c}
+              value={c}
+              onSelect={() => {
+                setSelectedCompany(c)
+                setCompanyOpen(false)
+              }}
+              className="cursor-pointer"
+            >
+              {c}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </Command>
+    </SelectContent>
                     </Select>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -194,6 +231,20 @@ const filteredData = data.filter((p) => {
                             {t}
                           </SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">Difficulty</label>
+                    <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+                      <SelectTrigger className="w-[160px] bg-input/50">
+                        <SelectValue placeholder="All difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="Easy">Easy</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Hard">Hard</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
