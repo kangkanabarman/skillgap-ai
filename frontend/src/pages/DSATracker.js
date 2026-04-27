@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -96,9 +96,7 @@ useEffect(() => {
 
       setCompanies(comps);
 
-      if (comps.length && !selectedCompany) {
-        setSelectedCompany(comps[0]);
-      }
+      setSelectedCompany((prev) => prev || comps[0] || '');
 
     } catch (err) {
       console.error('API Error:', err);
@@ -112,21 +110,25 @@ useEffect(() => {
   fetchData();
 }, []);
 
-const topics = selectedCompany
-  ? [
-      ...new Set(
-        data
-          .filter((p) => p.companies?.includes(selectedCompany))
-          .flatMap((p) => p.topics || [])
-      ),
-    ].sort()
-  : [];
+const topics = useMemo(
+  () =>
+    selectedCompany
+      ? [
+          ...new Set(
+            data
+              .filter((p) => p.companies?.includes(selectedCompany))
+              .flatMap((p) => p.topics || [])
+          ),
+        ].sort()
+      : [],
+  [data, selectedCompany]
+);
 
   useEffect(() => {
   if (selectedCompany && !topics.includes(selectedTopic)) {
     setSelectedTopic('all');
   }
-}, [selectedCompany]);
+}, [selectedCompany, selectedTopic, topics]);
 
 const filteredData = data.filter((p) => {
   if (!p.companies?.includes(selectedCompany)) return false;
