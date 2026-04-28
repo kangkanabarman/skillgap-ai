@@ -123,6 +123,7 @@ class SkillGapAnalysis(BaseModel):
     resume_skills: List[str]
     job_skills: List[str]
     missing_skills: List[str]
+    skill_gaps: Optional[List[Dict[str, Any]]] = None
     match_percentage: float
     confidence_score: float
     confidence_level: str
@@ -234,10 +235,10 @@ def compute_ai_similarity(resume_text: str, job_text: str) -> float:
 
 def validate_company_and_role(company: str, role: str):
     """
-    Strict validation:
-    - Company must exist
-    - Role must exist
-    - Role must belong to company (if mapped)
+    Input validation (non-strict).
+    We intentionally do NOT restrict company/role to a fixed list because
+    the skill analysis endpoint supports a multi-stage fallback chain
+    (static → external APIs → ML → LLM).
     """
 
     if not company or len(company.strip()) < 2:
@@ -246,28 +247,24 @@ def validate_company_and_role(company: str, role: str):
     if not role or len(role.strip()) < 2:
         raise HTTPException(status_code=400, detail="Invalid role name.")
 
-    company = company.strip()
-    role = role.strip()
-
-    valid_companies = list_companies()
-    valid_companies_lower = [c.lower() for c in valid_companies]
-
-    if company.lower() not in valid_companies_lower:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Company '{company}' is not supported."
-        )
-
-    valid_roles = list_roles(company)
-    valid_roles_lower = [r.lower() for r in valid_roles]
-
-    if role.lower() not in valid_roles_lower:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Role '{role}' is not valid for company '{company}'."
-        )
-
     return True
+
+
+def _normalize_role_to_profile(role: str) -> str:
+    """Map free-form role names to coarse role profiles used by static/ML fallbacks."""
+    r = (role or "").lower().strip()
+    if any(k in r for k in ["product", "pm", "program manager", "product manager"]):
+        return "product"
+    if any(k in r for k in ["data scientist", "ml", "machine learning", "data analyst", "analytics", "data"]):
+        return "data"
+    if any(k in r for k in ["front", "ui", "ux", "web", "react", "angular"]):
+        return "frontend"
+    return "backend"
+
+
+def _level_to_int(level: str) -> int:
+    mapping = {"beginner": 1, "intermediate": 2, "advanced": 3}
+    return mapping.get((level or "").lower().strip(), 0)
 
 # Routes
 @api_router.get("/")
@@ -357,11 +354,8 @@ async def analyze_skill_gap(
     job_request: JobSelectionRequest,
     current_user: dict = Depends(get_current_user),
 ): 
-    # Strict validation
-    validate_company_and_role(
-    job_request.company,
-    job_request.role
-)
+    # Non-strict validation (allows fallbacks)
+    validate_company_and_role(job_request.company, job_request.role)
 
 
 
@@ -391,14 +385,21 @@ async def analyze_skill_gap(
     # STEP 1 — PREDEFINED STATIC ROLES
     # ----------------------------------
     try:
-        from modules.job_data import get_default_skills_for_role
+        from modules.job_data import get_job_description, get_default_skills_for_role
 
-        predefined_skills = get_default_skills_for_role(job_request.role)
-
-        if predefined_skills:
-            job_skills_raw = predefined_skills
-            fallback_used = "PREDEFINED_STATIC"
-
+        # 1a) Prefer predefined company+role records (if present)
+        static_job = get_job_description(job_request.company, job_request.role)
+        if static_job and static_job.get("skills"):
+            job_skills_raw = static_job["skills"]
+            job_description_text = static_job.get("description")
+            fallback_used = "STATIC"
+        else:
+            # 1b) Otherwise try coarse role defaults (backend/frontend/data/product)
+            role_profile = _normalize_role_to_profile(job_request.role)
+            predefined_skills = get_default_skills_for_role(role_profile)
+            if predefined_skills:
+                job_skills_raw = predefined_skills
+                fallback_used = "STATIC"
     except Exception:
         pass
 
@@ -419,7 +420,7 @@ async def analyze_skill_gap(
                 nlp,
                 matcher
             )
-            fallback_used = "JOB_API"
+            fallback_used = "API"
 
 
     # ----------------------------------
@@ -438,7 +439,7 @@ async def analyze_skill_gap(
 
             job_skills_raw = get_default_skills_for_role(predicted_role)
 
-            fallback_used = "EMBEDDING_MODEL"
+            fallback_used = "ML"
 
         except Exception:
             pass
@@ -456,7 +457,7 @@ async def analyze_skill_gap(
                 job_request.role
             )
 
-            fallback_used = "OLLAMA_LLM"
+            fallback_used = "LLM"
 
         except Exception:
             raise HTTPException(
@@ -508,6 +509,33 @@ async def analyze_skill_gap(
     # STEP 6 — Skill Matching
     missing_skills = get_missing_skills(resume_skills, job_skills)
 
+    # Skill gap scoring (descending), used for prioritization
+    # Required level is a heuristic: default Intermediate; bump to Advanced for senior/lead roles.
+    required_level_int = 3 if any(
+        k in job_request.role.lower() for k in ["senior", "lead", "principal", "staff"]
+    ) else 2
+    resume_levels_raw = resume.get("skill_levels") or {}
+    resume_levels = {normalize_skill(k): _level_to_int(v) for k, v in resume_levels_raw.items()}
+
+    skill_gaps = []
+    for s in job_skills:
+        sn = normalize_skill(s)
+        current = resume_levels.get(sn, 0)
+        gap = max(0, required_level_int - current)
+        skill_gaps.append(
+            {
+                "skill": sn,
+                "required_level": required_level_int,
+                "current_level": current,
+                "gap": gap,
+            }
+        )
+    skill_gaps.sort(key=lambda x: (x["gap"], x["skill"]), reverse=True)
+
+    # Sort missing skills by gap (all missing typically tie, but this stays consistent)
+    gap_by_skill = {g["skill"]: g["gap"] for g in skill_gaps}
+    missing_skills = sorted(missing_skills, key=lambda s: (gap_by_skill.get(s, 0), s), reverse=True)
+
     rule_based_score = calculate_match_percentage(
         resume_skills,
         job_skills,
@@ -540,6 +568,7 @@ async def analyze_skill_gap(
         resume_skills=resume_skills,
         job_skills=job_skills,
         missing_skills=missing_skills,
+        skill_gaps=skill_gaps,
         match_percentage=match_percentage,
         confidence_score=confidence_score,
         confidence_level=confidence_level,
