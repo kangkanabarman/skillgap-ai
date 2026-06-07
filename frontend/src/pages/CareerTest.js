@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client, authHeaders } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 
 export default function CareerTest() {
   const [questions, setQuestions] = useState([]);
@@ -25,9 +22,8 @@ export default function CareerTest() {
 
   const fetchQuestions = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/career-test/questions`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await client.get('/career-test/questions', {
+        headers: authHeaders(),
       });
       setQuestions(response.data);
     } catch (error) {
@@ -64,16 +60,15 @@ export default function CareerTest() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem('token');
       const formattedAnswers = Object.entries(answers).map(([qId, answer]) => ({
         question_id: parseInt(qId) + 1,
         answer
       }));
 
-      await axios.post(
-        `${API}/career-test/submit`,
+      await client.post(
+        '/career-test/submit',
         { answers: formattedAnswers },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
 
       toast.success('Test completed!');

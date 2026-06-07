@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client, authHeaders } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 
 export default function CareerResults() {
   const [results, setResults] = useState([]);
@@ -19,9 +16,8 @@ export default function CareerResults() {
 
   const fetchResults = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/career-test/results`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await client.get('/career-test/results', {
+        headers: authHeaders(),
       });
       setResults(response.data);
     } catch (error) {

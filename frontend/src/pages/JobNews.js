@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Newspaper, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+function getSourceLabel(source) {
+  if (!source) return '';
+  if (typeof source === 'string') return source;
+  return source.name || source.url || '';
+}
 
 export default function JobNews() {
   const [articles, setArticles] = useState([]);
@@ -17,7 +20,7 @@ export default function JobNews() {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/news/jobs`, { params: { count: 15 } });
+      const res = await client.get('/news/jobs', { params: { count: 15 } });
       setArticles(res.data.articles || []);
       if (!res.data.articles?.length) {
         toast.info('No news loaded. Add GNEWS_API_KEY to backend .env for live hiring news.');
@@ -103,7 +106,7 @@ export default function JobNews() {
             <div className="space-y-4">
               {articles.map((a, i) => (
                 <motion.a
-                  key={i}
+                  key={a.id || a.url || i}
                   href={a.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -123,7 +126,7 @@ export default function JobNews() {
                         </p>
                       )}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{a.source}</span>
+                        <span>{getSourceLabel(a.source)}</span>
                         {a.publishedAt && (
                           <>
                             <span>·</span>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -20,10 +20,6 @@ import {
 } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { Code2, ExternalLink, Loader2 } from 'lucide-react';
-
-// Use environment variable or fallback to localhost
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
-const API = `${BACKEND_URL}/api`;
 
 const PROGRESS_KEY = 'dsa-progress';
 
@@ -65,50 +61,77 @@ function saveProgress(progress) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
 }
 
+const PERIOD_LABELS = {
+  '1. Thirty Days': 'Last 30 days',
+  '2. Three Months': 'Last 3 months',
+  '3. Six Months': 'Last 6 months',
+  '4. More Than Six Months': '6+ months',
+  '5. All': 'All time',
+};
+
 export default function DSATracker() {
   const [data, setData] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [periods, setPeriods] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState('5. All');
   const [loading, setLoading] = useState(true);
-const [progress, setProgress] = useState(getStoredProgress);
+  const [progress, setProgress] = useState(getStoredProgress);
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [companyOpen, setCompanyOpen] = useState(false);
 
-
   const navigate = useNavigate();
 
-useEffect(() => {
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API}/dsa/all`);
-      const problems = res.data || [];
+  useEffect(() => {
+    const fetchMeta = async () => {
+      try {
+        const [periodsRes, companiesRes] = await Promise.all([
+          client.get('/dsa/periods'),
+          client.get('/dsa/companies'),
+        ]);
+        const periodList = periodsRes.data || [];
+        const companyList = companiesRes.data || [];
+        setPeriods(periodList);
+        setCompanies(companyList);
+        setSelectedPeriod((prev) =>
+          periodList.includes(prev) ? prev : periodList.includes('5. All') ? '5. All' : periodList[0] || '5. All'
+        );
+        setSelectedCompany((prev) => prev || companyList[0] || '');
+      } catch (err) {
+        console.error('API Error:', err);
+        toast.info('Using demo data.');
+        setData(MOCK_DSA_DATA);
+        setCompanies([...new Set(MOCK_DSA_DATA.flatMap((p) => p.companies || []))].sort());
+        setSelectedCompany('Amazon');
+        setLoading(false);
+      }
+    };
 
-      setData(problems);
+    fetchMeta();
+  }, []);
 
-      // Extract companies from new structure
-      const comps = [
-        ...new Set(
-          problems.flatMap((p) => p.companies || [])
-        ),
-      ].sort();
+  useEffect(() => {
+    if (!selectedPeriod) return;
 
-      setCompanies(comps);
+    const fetchProblems = async () => {
+      setLoading(true);
+      try {
+        const res = await client.get('/dsa/all', {
+          params: { period: selectedPeriod },
+        });
+        setData(res.data || []);
+      } catch (err) {
+        console.error('API Error:', err);
+        setData(MOCK_DSA_DATA);
+        toast.info('Using demo data.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setSelectedCompany((prev) => prev || comps[0] || '');
-
-    } catch (err) {
-      console.error('API Error:', err);
-      setData(MOCK_DSA_DATA);
-      toast.info('Using demo data.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
+    fetchProblems();
+  }, [selectedPeriod]);
 
 const topics = useMemo(
   () =>
@@ -171,7 +194,7 @@ const filteredData = data.filter((p) => {
             <h1 className="text-4xl font-bold">DSA Tracker by Company</h1>
           </div>
           <p className="text-muted-foreground mb-8">
-            Striver SDE Sheet & Love Babbar 450 style problems by company
+            LeetCode company-wise DSA problems — filter by company, topic, difficulty, and interview window
           </p>
 
           {loading ? (
@@ -218,6 +241,21 @@ const filteredData = data.filter((p) => {
         </CommandGroup>
       </Command>
     </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">Time window</label>
+                    <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                      <SelectTrigger className="w-[200px] bg-input/50">
+                        <SelectValue placeholder="All time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {periods.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {PERIOD_LABELS[p] || p}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -281,9 +319,15 @@ const filteredData = data.filter((p) => {
           {p.title}
         </span>
 
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground hidden sm:inline max-w-[200px] truncate">
           {p.topics?.join(", ")}
         </span>
+
+        {p.frequency != null && (
+          <span className="text-xs text-muted-foreground hidden md:inline">
+            {Math.round(p.frequency)}%
+          </span>
+        )}
 
         {p.difficulty && (
           <span

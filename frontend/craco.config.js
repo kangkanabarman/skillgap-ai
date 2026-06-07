@@ -1,6 +1,6 @@
 // craco.config.js
 const path = require("path");
-require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
 // Check if we're in development/preview mode (not production build)
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
@@ -9,7 +9,9 @@ const isDevServer = process.env.NODE_ENV !== "production";
 // Environment variable overrides
 const config = {
   enableHealthCheck: process.env.ENABLE_HEALTH_CHECK === "true",
-  enableVisualEdits: isDevServer, // Only enable during dev server
+  // Visual edits plugin can crash newer Babel/React setups.
+  // Keep it OFF by default; enable explicitly via ENABLE_VISUAL_EDITS=true.
+  enableVisualEdits: isDevServer && process.env.ENABLE_VISUAL_EDITS === "true",
 };
 
 // Conditionally load visual edits modules only in dev mode

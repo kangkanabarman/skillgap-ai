@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
 export default function AuthPage({ setIsAuthenticated }) {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,10 +23,13 @@ export default function AuthPage({ setIsAuthenticated }) {
 
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const response = await axios.post(`${API}${endpoint}`, { email, password });
+      const payload = isLogin ? { email, password } : { name, email, password, role };
+      const response = await client.post(endpoint, payload);
 
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('email', response.data.email);
+      localStorage.setItem('role', response.data.role || role);
+      localStorage.setItem('name', response.data.name || name);
       setIsAuthenticated(true);
 
       toast.success(isLogin ? 'Welcome back!' : 'Account created successfully!');
@@ -57,6 +59,12 @@ export default function AuthPage({ setIsAuthenticated }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6" data-testid="auth-form">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="bg-input/50" />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -84,6 +92,15 @@ export default function AuthPage({ setIsAuthenticated }) {
                 placeholder="••••••••"
               />
             </div>
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <select id="role" value={role} onChange={(e) => setRole(e.target.value)} className="w-full h-10 rounded-md border border-input bg-input/50 px-3">
+                  <option value="student">Student</option>
+                  <option value="recruiter">Recruiter</option>
+                </select>
+              </div>
+            )}
 
             <Button
               data-testid="auth-submit-btn"

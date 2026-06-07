@@ -1,183 +1,266 @@
-# SkillGap AI – Career Guidance Web App
+# SkillGap AI
 
-A fully working career guidance web app that analyzes skill gaps, suggests learning paths, shows hiring news, and recommends DSA problems by company.
+AI-powered student and recruiter hiring platform: resume matching, job applications, career tools, company-wise DSA tracker, and hiring news.
 
-## Features
+---
 
-- **Skill Gap Analyzer (Core)**: Resume parsing (PDF/DOCX), skill extraction (spaCy + PhraseMatcher), job description mapping, skill matching, skill level estimation, and learning resource recommendations
-- **Real-Time Job News Feed**: Hiring and placement news via GNews API
-- **DSA Tracker by Company**: LeetCode-style problems by company (Amazon, Google, Microsoft, Meta, etc.)
-- **Career Test**: Rule-based career path recommendations (no paid LLM)
-- **Theme Toggle**: Dark/Light mode
+## What you need installed
 
-## Stack
+| Software | Version | Used for |
+|----------|---------|----------|
+| **Node.js** | 18 or newer | React frontend + Express API |
+| **npm** | (bundled with Node) | JavaScript dependencies |
+| **Python** | 3.10+ | AI engine (`backend/ai-engine`) |
+| **MongoDB** | 6+ (local or Atlas) | Database |
 
-| Layer | Tools |
-|-------|-------|
-| Frontend | React, TailwindCSS, shadcn/ui, Recharts, Framer Motion |
-| Backend | FastAPI (Python) |
-| NLP / AI | spaCy, fuzzywuzzy |
-| APIs | GNews API, YouTube API (optional) |
-| Auth & DB | MongoDB (motor) |
-| Hosting | Vercel, Netlify, Render (free tiers) |
+Check versions:
 
-## Setup
-
-### Backend
-
-1. Create a virtual environment and install dependencies:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   python -m spacy download en_core_web_sm
-   ```
-
-2. Copy .env and configure:
-   ```bash
-   cp .env
-   ```
-
-3. Set `MONGO_URL` (required). Use [MongoDB Atlas](https://www.mongodb.com/atlas) free tier or local MongoDB.
-
-4. Optional APIs:
-   - **GNews API**: Add `GNEWS_API_KEY` for hiring news (free 100 req/day at [gnews.io](https://gnews.io))
-   - **YouTube API**: Add `YOUTUBE_API_KEY` for video recommendations (optional)
-
-5. Run the server:
-   ```bash
-   uvicorn server:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-### Frontend
-
-1. Install dependencies:
-   ```bash
-   cd frontend
-   yarn install
-   ```
-
-2. Create `.env`:
-   ```bash
-   REACT_APP_BACKEND_URL=http://localhost:8000
-   ```
-
-3. Run the dev server:
-   ```bash
-   yarn start
-   ```
-
-## Project Structure
-
-```
-backend/
-├── modules/
-│   ├── resume_parser.py   # PDF/DOCX parsing, skill extraction, skill levels
-│   ├── job_data.py        # Job descriptions by company/role
-│   ├── skill_matcher.py   # Exact + fuzzy skill matching
-│   ├── learning_resources.py  # Curated free courses, rule-based roadmap
-│   ├── news_feed.py       # GNews API integration
-│   └── dsa_data.py        # DSA problems by company
-├── data/
-│   ├── 06_skills.csv      # Skills list for extraction
-│   └── dsa_problems.json  # LeetCode problems by company
-├── server.py
-├── skills_taxonomy.py
-└── requirements.txt
-
-frontend/
-├── src/
-│   ├── pages/
-│   │   ├── Dashboard.js
-│   │   ├── UploadResume.js
-│   │   ├── SkillAnalysis.js
-│   │   ├── JobNews.js      # Hiring news feed
-│   │   ├── DSATracker.js   # DSA problems by company
-│   │   └── ...
-│   └── components/
-│       └── ThemeToggle.jsx
-└── ...
-```
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/auth/register | Register |
-| POST | /api/auth/login | Login |
-| POST | /api/resume/upload | Upload resume (PDF/DOCX) |
-| POST | /api/skill-analysis | Analyze skill gap for company/role |
-| GET | /api/skill-analyses | List user analyses |
-| GET | /api/news/jobs | Hiring news (public) |
-| GET | /api/dsa/companies | DSA companies (public) |
-| GET | /api/dsa/problems?company=X&topic=Y | DSA problems (public) |
-
-## Free APIs Used
-
-- **GNews API**: Hiring news (100 req/day)
-- **YouTube API** (optional): Video recommendations
-- **Curated links**: FreeCodeCamp, Coursera free courses
-- **No paid LLM**: Rule-based learning roadmaps and career test
-
-## Running the Full Application
-
-### Quick Start (Both servers simultaneously)
-
-**Terminal 1 - Backend:**
 ```bash
-cd backend
-source venv/bin/activate  # Windows: venv\Scripts\activate
-uvicorn server:app --reload --host 0.0.0.0 --port 8000
-```
-Backend will be available at: **http://localhost:8000**
-- API Docs: http://localhost:8000/docs
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm install --legacy-peer-deps  # First time only
-npm start
-```
-Frontend will be available at: **http://localhost:3000**
-
-### Environment Setup
-
-**Backend (.env):**
-
-**Option A: MongoDB Atlas (Recommended - No local setup needed)**
-```bash
-# Get connection string from https://www.mongodb.com/atlas
-MONGO_URL=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/skillgap?retryWrites=true&w=majority
-DB_NAME=skillgap
-SECRET_KEY=your-secret-key-change-this-in-production
-GNEWS_API_KEY=your_gnews_api_key
-YOUTUBE_API_KEY=your_youtube_api_key
+node -v
+npm -v
+python3 --version
+mongosh --version   # or: mongo --version
 ```
 
-**Option B: Local MongoDB**
-```bash
-# Start MongoDB first: brew services start mongodb-community
-# Or: mongod (run in separate terminal)
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=skillgap
-SECRET_KEY=your-secret-key-change-this-in-production
-GNEWS_API_KEY=your_gnews_api_key
-YOUTUBE_API_KEY=your_youtube_api_key
+---
+
+## Project layout
+
+| Path | Purpose | Port |
+|------|---------|------|
+| `frontend/` | React UI | **3000** |
+| `backend/src/` | Node.js Express API | **8000** |
+| `backend/ai-engine/` | Python FastAPI (AI) | **8001** |
+
+```
+Skill-Booster-AI-main/
+├── frontend/                 # React app
+├── backend/
+│   ├── src/                  # Express API
+│   ├── ai-engine/            # Python AI service
+│   └── src/data/             # company_wise_dsa.json (DSA tracker)
+├── requirements.txt          # Python deps (AI engine)
+├── package.json              # npm scripts (run from root)
+└── README.md                 # this file
 ```
 
-**Frontend (.env):**
+---
+
+## Setup (first time)
+
+Do all steps from the **project root** (the folder that contains `package.json`).
+
+### 1. Unzip or clone the project
+
 ```bash
+cd Skill-Booster-AI-main
+```
+
+If you received a `.zip` file, extract it first, then `cd` into the folder.
+
+### 2. Install Node.js dependencies
+
+```bash
+npm run install:all
+```
+
+This installs packages for the root workspace, `backend/`, and `frontend/`.
+
+Equivalent manual commands:
+
+```bash
+npm install
+npm install --prefix backend
+npm install --prefix frontend
+```
+
+### 3. Python virtual environment + `requirements.txt`
+
+The AI service needs a virtual environment. **Easiest (recommended):**
+
+```bash
+npm run setup:ai
+```
+
+This will:
+
+- Create `backend/ai-engine/venv`
+- Install everything from `requirements.txt`
+- Download the spaCy language model (`en_core_web_sm`)
+
+**Manual setup** (same result):
+
+```bash
+cd backend/ai-engine
+python3 -m venv venv
+
+# macOS / Linux
+source venv/bin/activate
+
+# Windows (Command Prompt)
+venv\Scripts\activate
+
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+pip install --upgrade pip
+pip install -r ../../requirements.txt
+python -m spacy download en_core_web_sm
+cd ../..
+```
+
+> **Note:** `torch` and `sentence-transformers` are large. The first install may take several minutes.
+
+### 4. Environment variables
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Edit **`backend/.env`**:
+
+| Variable | Description |
+|----------|-------------|
+| `MONGO_URL` | MongoDB connection string (default: `mongodb://localhost:27017/skillgap`) |
+| `JWT_SECRET` | Secret for auth tokens — change to a long random string |
+| `GNEWS_API_KEY` | Optional — [gnews.io](https://gnews.io) free key for **Hiring News** |
+| `AI_SERVICE_URL` | Default `http://127.0.0.1:8001` (leave as-is for local dev) |
+| `PORT` | API port, default `8000` |
+
+**`frontend/.env`** (usually no changes needed):
+
+```env
 REACT_APP_BACKEND_URL=http://localhost:8000
 ```
 
-### Troubleshooting
+### 5. Start MongoDB
 
-- **Port already in use**: Kill process with `lsof -i :8000` or `lsof -i :3000`
-- **Module not found (spaCy)**: Run `python -m spacy download en_core_web_sm`
-- **npm dependency issues**: Use `npm install --legacy-peer-deps`
-- **MongoDB connection**: Ensure MongoDB is running locally or update `MONGO_URL` to Atlas connection string
+**Local MongoDB (macOS with Homebrew):**
 
-## License
+```bash
+brew services start mongodb-community
+```
 
-MIT
+**Local MongoDB (generic):**
+
+```bash
+mongod
+```
+
+**MongoDB Atlas:** put your Atlas connection string in `MONGO_URL` in `backend/.env`.
+
+The API will not work correctly until MongoDB is reachable.
+
+---
+
+## Run the application
+
+From the **project root**:
+
+```bash
+npm run dev
+```
+
+This starts all three services:
+
+| Service | URL |
+|---------|-----|
+| Web app | http://localhost:3000 |
+| API | http://localhost:8000 |
+| AI engine | http://localhost:8001 |
+
+Open **http://localhost:3000** in your browser.
+
+### Run services separately
+
+```bash
+npm run frontend    # React only (port 3000)
+npm run backend     # Node API only (port 8000)
+npm run ai          # Python AI only (port 8001)
+```
+
+---
+
+## npm scripts reference
+
+| Command | Description |
+|---------|-------------|
+| `npm run install:all` | Install all Node dependencies |
+| `npm run setup:ai` | Create Python venv + install `requirements.txt` + spaCy model |
+| `npm run dev` | Start frontend + backend + AI together |
+| `npm run build` | Production build of the React app |
+
+---
+
+## Features
+
+- **Student portal** — jobs, AI match scores, applications, career test, DSA tracker by company, hiring news
+- **Recruiter portal** — post jobs, JD parsing, applicant pipeline, analytics
+- **AI matching** — semantic similarity, skill overlap, resume/JD parsing
+
+---
+
+## Sharing the project (zip)
+
+**Include:** full source, `requirements.txt`, `.env.example` files, `backend/src/data/company_wise_dsa.json`
+
+**Exclude** (recipient regenerates these):
+
+- `node_modules/` → run `npm run install:all`
+- `backend/ai-engine/venv/` → run `npm run setup:ai`
+- `.env` files with real secrets → copy from `.env.example`
+
+---
+
+## Troubleshooting
+
+| Problem | What to do |
+|---------|------------|
+| `npm: command not found` | Install Node.js 18+ from [nodejs.org](https://nodejs.org) |
+| `EADDRINUSE` on 3000 / 8000 / 8001 | Stop the other process using that port or change `PORT` / frontend port |
+| MongoDB connection error | Start `mongod` or fix `MONGO_URL` in `backend/.env` |
+| AI / resume upload fails | Run `npm run setup:ai`; ensure `npm run ai` or `npm run dev` shows AI on port 8001 |
+| `Run npm run setup:ai from project root first` | AI venv missing — run step 3 above |
+| Hiring news empty | Add `GNEWS_API_KEY` to `backend/.env` |
+| DSA tracker shows demo data | Restart backend after setup; confirm `backend/src/data/company_wise_dsa.json` exists |
+
+---
+
+## API smoke test (optional)
+
+With the backend running:
+
+```bash
+BACKEND_URL=http://127.0.0.1:8000 python3 backend/tests/api.test.py
+```
+
+---
+
+## More documentation
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — system design and API layers
+- [backend/README.md](./backend/README.md) — backend-specific notes
+- [frontend/README.md](./frontend/README.md) — frontend notes
+
+---
+
+## Environment reference
+
+**`backend/.env`**
+
+```env
+PORT=8000
+MONGO_URL=mongodb://localhost:27017/skillgap
+JWT_SECRET=your-long-random-secret
+GNEWS_API_KEY=
+AI_SERVICE_URL=http://127.0.0.1:8001
+CORS_ORIGINS=http://localhost:3000
+PUBLIC_UPLOAD_BASE_URL=http://localhost:8000/uploads
+```
+
+**`frontend/.env`**
+
+```env
+REACT_APP_BACKEND_URL=http://localhost:8000
+```

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client, authHeaders } from '@/lib/api';
 import {
   BarChart,
   Bar,
@@ -17,9 +17,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, ExternalLink, Book } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
 export default function SkillAnalysis() {
   const [company, setCompany] = useState('');
   const [role, setRole] = useState('');
@@ -34,9 +31,8 @@ export default function SkillAnalysis() {
 
   const fetchAnalyses = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/skill-analyses`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await client.get('/skill-analyses', {
+        headers: authHeaders(),
       });
       setAnalyses(response.data);
     } catch (error) {
@@ -54,11 +50,10 @@ export default function SkillAnalysis() {
     setAnalyzing(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API}/skill-analysis`,
+      const response = await client.post(
+        '/skill-analysis',
         { company, role },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: authHeaders() }
       );
 
       setAnalysis(response.data);

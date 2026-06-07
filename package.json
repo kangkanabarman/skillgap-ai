@@ -1,0 +1,23 @@
+{
+  "name": "skillgap-ai",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AI-powered student + recruiter hiring platform",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "backend": "npm run start --prefix backend",
+    "frontend": "npm run start --prefix frontend",
+    "server": "npm run backend",
+    "client": "npm run frontend",
+    "ai": "npm run ai --prefix backend",
+    "dev": "concurrently -n api,ai,web -c blue,magenta,green \"npm run backend\" \"npm run ai\" \"npm run frontend\"",
+    "build": "npm run build --prefix frontend",
+    "setup:ai": "npm run setup:ai --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

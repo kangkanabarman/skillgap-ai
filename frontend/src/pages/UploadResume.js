@@ -1,13 +1,11 @@
+import PortalLayout from "@/components/PortalLayout";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { client, authHeaders } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Upload, Loader2, CheckCircle2 } from 'lucide-react';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 
 export default function UploadResume() {
   const [file, setFile] = useState(null);
@@ -38,12 +36,12 @@ export default function UploadResume() {
     formData.append('file', file);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/resume/upload`, formData, {
+      const endpoint = localStorage.getItem("role") === "student" ? "/platform/resume/upload" : "/resume/upload";
+      const response = await client.post(endpoint, formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
+          ...authHeaders(),
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       setSkills(response.data.extracted_skills);
@@ -57,33 +55,8 @@ export default function UploadResume() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <nav className="bg-background/80 backdrop-blur-md p-6 md:p-12 flex justify-between items-center border-b border-border">
-        <div
-          className="text-2xl font-bold tracking-tight cursor-pointer"
-          onClick={() => navigate('/dashboard')}
-        >
-          SkillGap <span className="text-primary">AI</span>
-        </div>
-        <Button
-          data-testid="back-dashboard-btn"
-          variant="outline"
-          onClick={() => navigate('/dashboard')}
-          className="rounded-md"
-        >
-          Back to Dashboard
-        </Button>
-      </nav>
-
-      <div className="p-6 md:p-12 max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-4xl font-bold mb-2">Upload Your Resume</h1>
-          <p className="text-muted-foreground mb-12">
-            Upload your resume to analyze your skills and identify gaps
-          </p>
+    <PortalLayout title="Upload Resume" subtitle="Parse your resume and unlock AI job matching">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl">
 
           {!uploaded ? (
             <div className="glass-card rounded-xl p-12">
@@ -180,8 +153,7 @@ export default function UploadResume() {
               </div>
             </div>
           )}
-        </motion.div>
-      </div>
-    </div>
+      </motion.div>
+    </PortalLayout>
   );
 }

@@ -1,0 +1,16 @@
+# SkillGap AI — Python dependencies (AI microservice)
+#
+# Used by: backend/ai-engine (FastAPI, resume/JD parsing, semantic matching)
+#
+# Recommended setup (from project root):
+#   npm run setup:ai
+#
+# Manual setup:
+#   cd backend/ai-engine
+#   python3 -m venv venv
+#   source venv/bin/activate          # Windows: venv\Scripts\activate
+#   pip install --upgrade pip
+#   pip install -r ../../requirements.txt
+#   python -m spacy download en_core_web_sm
+
+-r backend/ai-engine/requirements-ai.txt
