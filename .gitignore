@@ -53,3 +53,7 @@ backend/ai-engine/uploads/
 .vercel
 .cache/
 coverage/
+
+# Ignore AI model files
+backend/ai-engine/ml/
+backend/ai-engine/ml/skillgap_transformer_v1/
